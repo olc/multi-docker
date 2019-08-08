@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t olecam/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true olecam/react-test npm test
+
+after_success:
+  - docker build -r olecam/multi-client ./client
+  - docker build -r olecam/multi-nginx ./nginx
+  - docker build -r olecam/multi-server ./server
+  - docker build -r olecam/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images  and push them to docker hub
+  - docker push olecam/multi-client
+  - docker push olecam/multi-nginx
+  - docker push olecam/multi-server
+  - docker push olecam/multi-worker
